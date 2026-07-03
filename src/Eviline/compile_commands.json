@@ -1,0 +1,17 @@
+[
+  {
+    "file": "rltest.c",
+    "arguments": [
+      "/data/data/com.termux/files/usr/bin/clang",
+      "-std=c23",
+      "-g",
+      "-O0",
+      "-Werror",
+      "-mtune=native",
+      "-march=native",
+      "rltest.c",
+      "-c"
+    ],
+    "directory": "/data/data/com.termux/files/home/work/sh-dev/src/eviLE"
+  }
+]

@@ -1,0 +1,743 @@
+./Makefile
+# vim: ts=8 sw=8 noet :
+CC=clang
+LD=ld.lld
+
+CFLAGS= -std=c23 -g -O0 -Werror -flto -mtune=native -march=native
+
+
+
+main: bind.o cursor.o rltest.o
+	$(CC) $(CFLAGS) bind.o cursor.o rltest.o -o main
+
+bind.o : bind.c
+	$(CC) $(CFLAGS) bind.c -c
+
+cursor.o : cursor.c
+	$(CC) $(CFLAGS) cursor.c -c
+
+rltest.o : rltest.c
+	$(CC) $(CFLAGS) rltest.c -c
+
+clean:
+	rm -f *.o
+	rm -f main
+
+.PHONY: clean
+./bind.c
+/* vim: set ts=8 sw=8 nu rnu sts=8 et: */
+#include "bind.h"
+// #include <bits/types/struct_timeval.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/select.h>
+#include <termios.h>
+#include <unistd.h>
+
+fd_set set;
+struct timeval timeout;
+BIND_NODE_T * initialize_keymap(void) {
+        // root array has 256 elements.
+        BIND_NODE_T * root = (BIND_NODE_T *)malloc(sizeof(BIND_NODE_T));
+        root->type         = NODE;
+        root->ptr          = (BIND_NODE_T *)malloc(256 * sizeof(BIND_NODE_T));
+        memset(root->ptr, 0, 256 * sizeof(BIND_NODE_T));
+        return root;
+}
+int rm_bind(BIND_NODE_T * nonnull root, char * nonnull seq) {
+        // 约定: 1为未找到该绑定.0为成功解除.-1为未定义行为.
+        auto first = (BIND_NODE_T *)root->ptr;
+        auto last  = first;
+        // 目前seq不可能为0
+        // 遍历字符串.
+        for (; *seq; seq++) {
+                // 在第一次时位于root所指数组,而它应该不可能被释放.
+                // 第一次时将直接访问一次数组。
+                // 这里需要注意，取得元素后first应该跟进指针，
+                // 因为这个元素马上就会被清零或者free.
+                // 后续同逻辑。
+                first = ((BIND_NODE_T *)first[*seq].ptr);
+                //                                                        ^在这里跟进指针
+                //  这里first已经跟进,last保持.现在需要基于last来清理元素以及数组.
+                //  开始进行清理.
+                // 现在已经进入字符串节点。判断字符串是否将要结束。
+                if (*(seq + 1) != 0) { // 字符串并非快要结束
+                        // 那么这里只能是NODE.由于需要完全匹配,如果遇到FUNCION与NONE,应当报错没有该绑定.
+                        if (last[*seq].type != NODE) {
+                                fprintf(stderr, "fuck,没有该绑定!");
+                                return 1;
+                        }
+                        // 异常处理结束.
+                        // 开始清理元素.
+                        last[*seq].type = NONE;
+                        last[*seq].ptr  = NULL;
+                        // 元素清理完成.
+                        // 开始检查是否需要释放数组.
+                        int status = 0;     // 用或运算检查是否还有其它元素
+                        if (last != root) { // 检查是不是root所指数组
+                                int status = 0;
+                                for (uint16_t i = 0; i <= 255; i++) {
+                                        status |= last[i].type; // 检查是否数组全空.
+                                }
+                                if (status == 0) {
+                                        free(last); // 全空则释放它.
+                                }
+                        }
+                        // 数组释放处理完毕.
+                        // 清理完毕.
+                        last = first;         // 慢指针跟进.
+                } else if (*(seq + 1) == 0) { // 字符串将要结束.
+                        // 那么这里只能是FUNCION.由于需要完全匹配,如果遇到NODE与NONE,应当报错没有该绑定.
+                        if (last[*seq].type != FUNCTION) {
+                                fprintf(stderr, "fuck,没有该绑定!");
+                                return 1;
+                        }
+                        // 异常处理结束.
+                        // 开始进行清理.
+                        last[*seq].type = NONE;
+                        last[*seq].ptr  = NULL;
+                        // 元素清理完成.
+                        // 开始检查是否需要释放数组.
+                        int status = 0;     // 用或运算检查是否还有其它元素
+                        if (last != root) { // 检查是不是root所指数组
+                                int status = 0;
+                                for (uint16_t i = 0; i <= 255; i++) {
+                                        status |= last[i].type; // 检查是否数组全空.
+                                }
+                                if (status == 0) {
+                                        free(last); // 全空则释放它.
+                                }
+                        }
+                        // 数组释放处理完毕.
+                        // 清理完毕.
+                        // 现在清理完成，位于末尾，接下来的执行没有必要，直接返回0.
+                        return 0;
+                }
+        }
+        return -1; // 遇到未定义行为.
+}
+
+int add_bind(BIND_NODE_T * nonnull root, long timeout, char * nonnull seq, void * nonnull func) {
+        auto node = root;
+        // 目前seq不可能为0
+        // 目前func不可能为0
+        for (; *seq; seq++) {
+
+                node = &(((BIND_NODE_T *)node->ptr)[*seq]);
+                if (*(seq + 1) != 0) {
+                        if (node->type == NONE) {
+                                node->type = NODE;
+                                node->ptr  = (BIND_NODE_T *)malloc(256 * sizeof(BIND_NODE_T));
+                                memset(node->ptr, 0, 256 * sizeof(BIND_NODE_T));
+                                // nothing
+                        } else if (node->type == FUNCTION) {
+                                node->type       = NODE;
+                                node->timeout_us = timeout;
+                                void * tmp       = node->ptr;
+                                node->ptr        = (BIND_NODE_T *)malloc(256 * sizeof(BIND_NODE_T));
+                                ((BIND_NODE_T *)node->ptr)[0].type = FUNCTION;
+                                ((BIND_NODE_T *)node->ptr)[0].ptr  = tmp;
+                                // nothing
+                        }
+                } else if (*(seq + 1) == 0) {
+                        if (node->type == NONE || node->type == FUNCTION) {
+                                node->ptr  = func;
+                                node->type = FUNCTION;
+                                // return here
+                                return 0;
+                        } else if (node->type == NODE) {
+                                ((BIND_NODE_T *)node->ptr)[0].type = FUNCTION;
+                                ((BIND_NODE_T *)node->ptr)[0].ptr  = func;
+                                // return here
+                                return 0;
+                        }
+                }
+        }
+        return 0;
+}
+
+// void input_loop(void) {
+//         while (1) {
+//                 void * nullable addr = NULL;
+//                 while (1) {
+//                         char c;
+//                         int i         = read(STDIN_FILENO, &c, 1);
+//                         SUCCESS_T ret = further_match(&addr, c);
+//                         if (ret == 0) {
+//                                 if (addr) {
+//                                         ((void (*)(void))addr)();
+//                                 }
+//                                 break;
+//                         } else if (ret == -1) {
+//                                 break;
+//                         }
+//                 }
+//         }
+// }
+
+SUCCESS_T further_match(BIND_NODE_T * nonnull root, void * nonnull * nonnull addr, char byte) {
+        // 约定:返回值0:成功,-1:失败,1,继续
+        static typeof(root) node;
+        node = root;
+        node = &(((BIND_NODE_T *)node->ptr)[byte]);
+        if (node->type == FUNCTION) {
+                // printf("matched\n");
+                //((void (*)(void))node->ptr)();
+                *addr = node->ptr;
+                node  = root;
+                return 0;
+        } else if (node->type == NONE) {
+                // printf("none,");
+                *addr = NULL;
+                node  = root;
+                return -1;
+        } else if (node->type == NODE && ((BIND_NODE_T *)node->ptr)[0].type != FUNCTION) {
+                // printf("waiting,");
+                return 1;
+        } else if (node->type == NODE && ((BIND_NODE_T *)node->ptr)[0].type == FUNCTION) {
+                // printf("fork,");
+                timeout.tv_sec  = 0;
+                timeout.tv_usec = (long)node->timeout_us;
+                FD_ZERO(&set);
+                FD_SET(1, &set);
+
+                if (select(2, &set, NULL, NULL, &timeout) == 0) {
+                        // printf("timeout\n");
+                        *addr = ((BIND_NODE_T *)node->ptr)[0].ptr;
+                        //((void (*)(void))((BIND_NODE_T *)node->ptr)[0].ptr)();
+                        node = root;
+                        return 0;
+                } else {
+                        // printf("notimeout,");
+                        return 1;
+                }
+        }
+        return -128;
+}
+
+// int main(void) {
+//     initialize_keymap();
+//
+//     // 初始化终端
+//     tcgetattr(STDIN_FILENO, &orig_termios);
+//     setvbuf(stdout, NULL, _IONBF, 0);
+//     enable_raw();
+//
+//     add_bind(1, "\033", a);
+//     add_bind(0, "\033[A", b);
+//     add_bind(100000, "fuck", fuck);
+//     input_loop();
+//     return 0;
+// }
+./bind.h
+// bind.h
+#include <stdint.h>
+#define FUNCTION 1
+#define NODE 2
+#define NONE 0
+#define auto(x, y) typeof(y) x = y
+
+#define nonnull _Nonnull
+#define nullable _Nullable
+
+struct bind_node_str {
+        uint16_t timeout_us;
+        char type; // 暂时那三个define
+        void * nonnull ptr;
+};
+
+typedef struct bind_node_str BIND_NODE_T;
+typedef int8_t SUCCESS_T;
+
+extern BIND_NODE_T * nonnull initialize_keymap(void);
+
+extern int
+add_bind(BIND_NODE_T * nonnull root, long timeout, char * nonnull seq, void * nonnull func);
+
+extern SUCCESS_T
+further_match(BIND_NODE_T * nonnull root, void * nonnull * nonnull addr, char byte);
+
+extern int rm_bind(BIND_NODE_T * nonnull root, char * nonnull seq);
+./byte.c
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <termios.h>
+#include <unistd.h>
+
+int main(int argc, char * argv[]) {
+        uint_fast8_t buf;
+        struct termios origin_termios, mod_termios;
+        tcgetattr(STDIN_FILENO, &origin_termios);
+        mod_termios = origin_termios;
+        mod_termios.c_lflag &= ~(ICANON | ECHO);
+        tcsetattr(STDIN_FILENO, TCSANOW, &mod_termios);
+        tcsetattr(STDOUT_FILENO, TCSANOW, &mod_termios);
+        while (1) {
+                read(STDIN_FILENO, &buf, 1);
+
+                if (buf == '\n') {
+                        printf("\n");
+                } else {
+                        printf("%X", buf);
+                        fflush(stdout);
+                }
+        }
+        return EXIT_SUCCESS;
+}
+./compile_commands.json
+[
+  {
+    "file": "bind.c",
+    "arguments": [
+      "clang",
+      "-std=c23",
+      "-g",
+      "-O0",
+      "-Werror",
+      "-flto",
+      "-mtune=native",
+      "-march=native",
+      "bind.c",
+      "-c"
+    ],
+    "directory": "/home/yinzo/sh-dev/src/nrl/testcode"
+  },
+  {
+    "file": "cursor.c",
+    "arguments": [
+      "clang",
+      "-std=c23",
+      "-g",
+      "-O0",
+      "-Werror",
+      "-flto",
+      "-mtune=native",
+      "-march=native",
+      "cursor.c",
+      "-c"
+    ],
+    "directory": "/home/yinzo/sh-dev/src/nrl/testcode"
+  },
+  {
+    "file": "rltest.c",
+    "arguments": [
+      "clang",
+      "-std=c23",
+      "-g",
+      "-O0",
+      "-Werror",
+      "-flto",
+      "-mtune=native",
+      "-march=native",
+      "rltest.c",
+      "-c"
+    ],
+    "directory": "/home/yinzo/sh-dev/src/nrl/testcode"
+  }
+]./cursor.c
+#include <stdio.h>
+void cursor_left(void) { printf("\033[D"); }
+void cursor_right(void) { printf("\033[C"); }
+void cursor_up(void) { printf("\033[A"); }
+void cursor_down(void) { printf("\033[B"); }
+./cursor.h
+extern void cursor_up(void);
+extern void cursor_down(void);
+extern void cursor_left(void);
+extern void cursor_right(void);
+./cursortest.c
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <termios.h>
+#include <unistd.h>
+
+int main(void) {
+
+        struct termios origin_termios;
+        tcgetattr(STDIN_FILENO, &origin_termios);
+
+        struct termios raw_termios = origin_termios;
+
+        raw_termios.c_lflag &= ~(ICANON | ECHO);
+
+        tcsetattr(STDIN_FILENO, TCSANOW, &raw_termios);
+        system("clear");
+        uint8_t key = 0;
+        while (read(STDIN_FILENO, &key, 1) == 1) {
+                switch (key) {
+                case 'h':
+                        printf("\033[1D"); // 左
+                        break;
+                case 'j':
+                        printf("\033[1B"); // 下
+                        break;
+                case 'k':
+                        printf("\033[1A"); // 上
+                        break;
+                case 'l':
+                        printf("\033[1C"); // 右
+                        break;
+                case 'q':
+                        goto end;
+                        break;
+                default:
+                        printf("%c", key); // 键
+                        break;
+                }
+                fflush(stdout);
+        }
+end:
+        tcsetattr(STDIN_FILENO, TCSANOW, &origin_termios);
+        return 0;
+}
+./fd.c
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <termios.h>
+#include <time.h>
+#include <unistd.h>
+uint_fast8_t state = 0;
+char byte;
+uint16_t lists[112] = {
+    0xCC80, 0xCC81, 0xCC82, 0xCC83, 0xCC84, 0xCC85, 0xCC86, 0xCC87, 0xCC88, 0xCC89, 0xCC8A, 0xCC8B,
+    0xCC8C, 0xCC8D, 0xCC8E, 0xCC8F, 0xCC90, 0xCC91, 0xCC92, 0xCC93, 0xCC94, 0xCC95, 0xCC96, 0xCC97,
+    0xCC98, 0xCC99, 0xCC9A, 0xCC9B, 0xCC9C, 0xCC9D, 0xCC9E, 0xCC9F, 0xCCA0, 0xCCA1, 0xCCA2, 0xCCA3,
+    0xCCA4, 0xCCA5, 0xCCA6, 0xCCA7, 0xCCA8, 0xCCA9, 0xCCAA, 0xCCAB, 0xCCAC, 0xCCAD, 0xCCAE, 0xCCAF,
+    0xCCB0, 0xCCB1, 0xCCB2, 0xCCB3, 0xCCB4, 0xCCB5, 0xCCB6, 0xCCB7, 0xCCB8, 0xCCB9, 0xCCBA, 0xCCBB,
+    0xCCBC, 0xCCBD, 0xCCBE, 0xCCBF, 0xCD80, 0xCD81, 0xCD82, 0xCD83, 0xCD84, 0xCD85, 0xCD86, 0xCD87,
+    0xCD88, 0xCD89, 0xCD8A, 0xCD8B, 0xCD8C, 0xCD8D, 0xCD8E, 0xCD8F, 0xCD90, 0xCD91, 0xCD92, 0xCD93,
+    0xCD94, 0xCD95, 0xCD96, 0xCD97, 0xCD98, 0xCD99, 0xCD9A, 0xCD9B, 0xCD9C, 0xCD9D, 0xCD9E, 0xCD9F,
+    0xCDA0, 0xCDA1, 0xCDA2, 0xCDA3, 0xCDA4, 0xCDA5, 0xCDA6, 0xCDA7, 0xCDA8, 0xCDA9, 0xCDAA, 0xCDAB,
+    0xCDAC, 0xCDAD, 0xCDAE, 0xCDAF};
+
+int parse_utf8(void) {
+        switch (state) {
+        case 0:
+                if ((byte & 0x80) == 0x00) {
+                        // ASCII
+                        state = 1;
+                } else if ((byte & 0xE0) == 0xC0) {
+                        // 2 字节
+                        state = 2;
+                } else if ((byte & 0xF0) == 0xE0) {
+                        // 3 字节
+                        state = 3;
+                } else if ((byte & 0xF8) == 0xF0) {
+                        // 4 字节
+                        state = 4;
+                } else {
+                        // 非法
+                        state = 0;
+                        return -1;
+                }
+        default:
+                return 0;
+        }
+}
+// 最大255
+#define COUNT 40
+void print_fdwb(void) {
+        uint_fast8_t count = rand() % (COUNT + 1);
+        for (uint_fast8_t i; i <= count; ++i) {
+                uint_fast16_t selected   = lists[rand() % 112]; // 获取随机发电字符
+                uint_fast8_t reversed[2] = {                    // 给字节序翻一下
+                                            (selected >> 8) & 0xFF,
+                                            selected & 0xFF};
+                write(STDOUT_FILENO, &reversed, 2); // 写
+        }
+}
+
+int main(int argc, char * argv[]) {
+        // 调终端
+        struct termios origin_termios_attribute;
+        tcgetattr(STDIN_FILENO, &origin_termios_attribute);
+        struct termios init_termios_attribute = origin_termios_attribute;
+        init_termios_attribute.c_lflag &= ~(ICANON | ECHO);
+        tcsetattr(STDIN_FILENO, TCSANOW, &init_termios_attribute);
+        setvbuf(stdout, NULL, _IONBF, 0);
+
+        srand((unsigned int)time(NULL));
+
+        while (1) { // 开始操作
+                read(STDIN_FILENO, &byte, 1);
+                if (byte == '\n') {
+                        printf("\n");
+                } else {
+                        if (state) {
+                                write(STDOUT_FILENO, &byte, 1);
+                                if (--state == 0) {
+                                        print_fdwb();
+                                }
+                        } else {
+                                parse_utf8();
+                                write(STDOUT_FILENO, &byte, 1);
+                                if (--state == 0) {
+                                        print_fdwb();
+                                }
+                        }
+                }
+        }
+        return EXIT_SUCCESS;
+}
+./rltest.c
+/* vim: set ts=8 sw=8 sts=8 et: */
+#include "bind.h"
+#include "cursor.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <termios.h>
+#include <unistd.h>
+
+struct termios orig_termios;
+BIND_NODE_T * root       = NULL;
+constexpr int MULTIPLIER = 2;
+
+/* 这些应该被装进头文件里。*/
+
+typedef struct {
+        uint8_t size;  // 1,2,3,4
+        uint8_t width; // 0,1,2
+} CHAR_META_T;
+
+typedef struct line_unit_str {
+        struct line_unit_str * prev;
+        uint32_t lineno;
+        uint32_t size;
+        CHAR_META_T * meta;
+        char * buffer;
+        struct line_unit_str * next;
+} LINE_UNIT_T;
+
+uint32_t lineno;
+uint32_t point;
+LINE_UNIT_T * root_line = nullptr;
+
+// end
+void * nmalloc(size_t elements, size_t element_size) {
+        void * ptr = calloc(elements, element_size);
+        if (!ptr) {
+                perror("nmalloc");
+        }
+        return ptr;
+}
+
+// 完成!!久久!!完成!!<@lvq_14907>
+void accept_line() {}
+// 添加字符
+void insert_char() {}
+// 删除字符
+void del_char() {}
+// 左移光标
+void le_left() {}
+// 右移光标
+void le_right() {}
+// 上移行
+void le_up() {}
+// 下移行
+void le_down() {}
+// 行释放
+void linealloc() {}
+// 行分配
+void linefree() {}
+// 结束
+void finish() {}
+// 重绘单行
+void redraw_line() {}
+// 重绘全部
+void redraw_all() {}
+
+void input_loop(void) {
+        while (1) {
+                void * nullable addr = NULL;
+                while (1) {
+                        char c;
+                        int i         = read(STDIN_FILENO, &c, 1);
+                        SUCCESS_T ret = further_match(root, &addr, c);
+                        if (ret == 0) {
+                                if (addr) {
+                                        // 这里应该是行编辑函数之类的，到后期改.
+                                        ((void (*)(void))addr)();
+                                }
+                                break;
+                        } else if (ret == -1) {
+                                // 这里应该是默认函数之类的，到后期改.
+                                break;
+                        }
+                }
+        }
+}
+
+int main(int argc, char * argv[]) {
+        root         = initialize_keymap();
+        long timeout = 0;
+
+        tcgetattr(STDIN_FILENO, &orig_termios);
+        orig_termios.c_lflag &= ~(ICANON | ECHO);
+        tcsetattr(STDIN_FILENO, TCSANOW, &orig_termios);
+        setvbuf(stdout, NULL, _IONBF, 0);
+        add_bind(root, timeout, "\n", accept_line);
+        add_bind(root, timeout, "\x11", finish);
+        add_bind(root, timeout, "\x7f", del_char);
+        add_bind(root, timeout, "\x4", accept_line);
+
+        LINE_UNIT_T * root_line = (LINE_UNIT_T *)nmalloc(1, sizeof(LINE_UNIT_T));
+        input_loop();
+
+        return 0;
+}
+./unicode.c
+#include <stdint.h>
+#include <stdio.h>
+#include <termios.h>
+#include <unistd.h>
+
+typedef enum { STATE_IDLE, STATE_WAIT_2ND, STATE_WAIT_3RD, STATE_WAIT_4TH } Utf8State;
+
+int utf8_parse(uint8_t buf, Utf8State * state, uint32_t * unicode) {
+        static uint32_t temp_code;
+
+        switch (*state) {
+        case STATE_IDLE:
+                if ((buf & 0x80) == 0x00) {
+                        // ASCII
+                        *unicode = buf;
+                        return 1;
+                } else if ((buf & 0xE0) == 0xC0) {
+                        // 2 字节
+                        temp_code = (buf & 0x1F) << 6;
+                        *state    = STATE_WAIT_2ND;
+                        return 0;
+                } else if ((buf & 0xF0) == 0xE0) {
+                        // 3 字节
+                        temp_code = (buf & 0x0F) << 12;
+                        *state    = STATE_WAIT_3RD;
+                        return 0;
+                } else if ((buf & 0xF8) == 0xF0) {
+                        // 4 字节
+                        temp_code = (buf & 0x07) << 18;
+                        *state    = STATE_WAIT_4TH;
+                        return 0;
+                } else {
+                        // 非法）
+                        *state = STATE_IDLE;
+                        return -1;
+                }
+
+        case STATE_WAIT_2ND:
+                if ((buf & 0xC0) != 0x80)
+                        return -1;
+                *unicode = temp_code | (buf & 0x3F);
+                *state   = STATE_IDLE;
+                return 2;
+
+        case STATE_WAIT_3RD:
+                if ((buf & 0xC0) != 0x80)
+                        return -1;
+                temp_code |= (buf & 0x3F) << 6;
+                *state = STATE_WAIT_2ND;
+                return 0;
+
+        case STATE_WAIT_4TH:
+                if ((buf & 0xC0) != 0x80)
+                        return -1;
+                temp_code |= (buf & 0x3F) << 12;
+                *state = STATE_WAIT_3RD;
+                return 0;
+
+        default:
+                *state = STATE_IDLE;
+                return -1;
+        }
+}
+
+int main() {
+        uint8_t buf;
+        Utf8State state = STATE_IDLE;
+        uint32_t unicode;
+        int ret;
+        struct termios origin_termios_attribute;
+        tcgetattr(STDIN_FILENO, &origin_termios_attribute);
+        struct termios init_termios_attribute = origin_termios_attribute;
+
+        init_termios_attribute.c_lflag &= ~(ICANON | ECHO);
+
+        tcsetattr(STDIN_FILENO, TCSANOW, &init_termios_attribute);
+
+        // 循环读取 TTY 输入（每次读 1 字节，模拟单字节缓冲区）
+        while (read(STDIN_FILENO, &buf, 1) == 1) {
+                ret = utf8_parse(buf, &state, &unicode);
+                switch (ret) {
+                case 1:
+                        printf("ASCII ：%c（Unicode: U+%04X）\n", (char)unicode, unicode);
+                        break;
+                case 2:
+                        printf("Unicode (UTF-8）：U+%04X\n", unicode);
+                        break;
+                case -1:
+                        printf("非法（字节值：0x%02X）\n", buf);
+                        break;
+                default:
+                        break;
+                }
+        }
+
+        return 0;
+}
+./unicode_recognize.c
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+
+int utf8_classify(uint8_t byte) {
+        if ((byte & 0b10000000) == 0b00000000)
+                return 1;
+        if ((byte & 0b11000000) == 0b10000000)
+                return 0;
+        if ((byte & 0b11100000) == 0b11000000) {
+                if (byte == 0b11000000 || byte == 0b11000001)
+                        return -1;
+                return 2;
+        }
+        if ((byte & 0b11110000) == 0b11100000)
+                return 3;
+        if ((byte & 0b11111000) == 0b11110000) {
+                if (byte > 0b11110010)
+                        return -1;
+                return 4;
+        }
+        return -1;
+}
+
+int main(void) {
+        const char * test = "测试👿";
+        for (size_t i = 0; test[i]; ++i) {
+                printf("byte[%2zu] 0x%02X\n", i, test[i]);
+                int ret = utf8_classify(test[i]);
+                switch (ret) {
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                        printf("HEAD with length %d\n", ret);
+                        break;
+                case 0:
+                        printf("BODY\n");
+                        break;
+                case -1:
+                        printf("INVALID\n");
+                        break;
+                default:
+                        printf("UNDEFINED\n");
+                        break;
+                }
+        }
+        return 0;
+}

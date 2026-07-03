@@ -1,0 +1,38 @@
+# Markdown (all under sh-dev)
+*.md
+
+# Build artifacts
+*.o
+*.a
+*.so
+*.dylib
+*.d
+*.out
+*.exe
+*.obj
+*.lib
+*.exp
+*.pdb
+*.ilk
+
+# Executables
+build/
+bin/
+
+# Compiler/linker
+*.su
+*.gcno
+*.gcda
+*.gcov
+
+# Editor
+*.swp
+*.swo
+*~
+.DS_Store
+
+memory
+
+.cache
+
+src/bin/*

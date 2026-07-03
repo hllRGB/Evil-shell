@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+"""replace_lines FILE START END [--pretend]
+
+Replace lines START..END (1-indexed, inclusive) in FILE with content from stdin.
+New content can be any number of lines (including 0, i.e. delete range).
+
+OPTIONS:
+  --pretend    Don't write. Show affected lines + 4 context lines with line nums.
+  --help       Show this.
+
+EXAMPLES:
+  echo 'new line' | replace_lines foo.c 5 7
+  replace_lines --pretend bar.h 10 12
+  printf 'a\nb\nc\n' | replace_lines x.txt 1 3     # replace with 3 lines
+  </dev/null replace_lines x.txt 1 3                # delete lines 1-3
+
+  # heredoc
+  replace_lines x.txt 5 7 << 'EOF'
+  line1
+  line2
+  EOF
+"""
+import sys, os
+
+CONTEXT = 4
+
+def die(msg):
+    print(f"replace_lines: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+def show_pretend(lines, start, end, total):
+    """Print affected range with context and line numbers."""
+    lo = max(0, start - 1 - CONTEXT)
+    hi = min(total, end + CONTEXT)
+    width = len(str(hi))
+
+    for i in range(lo, hi):
+        lineno = i + 1
+        marker = ">>> " if start - 1 <= i < end else "    "
+        print(f"{marker}{lineno:>{width}}  {lines[i]}", end='')
+
+def main():
+    args = sys.argv[1:]
+    pretend = False
+
+    while args and args[0].startswith('--'):
+        flag = args.pop(0)
+        if flag == '--help':
+            print(__doc__.strip())
+            return
+        if flag == '--pretend':
+            pretend = True
+        else:
+            die(f"unknown flag: {flag}")
+
+    if len(args) != 3:
+        die("usage: replace_lines FILE START END [--pretend]")
+
+    path, s_str, e_str = args
+
+    try:
+        start = int(s_str)
+        end = int(e_str)
+    except ValueError:
+        die("START and END must be integers")
+
+    if start < 1 or end < start:
+        die("START >= 1, END >= START")
+
+    if not os.path.isfile(path):
+        die(f"file not found: {path}")
+
+    with open(path, 'r') as f:
+        lines = f.readlines()
+
+    total = len(lines)
+    if start > total:
+        die(f"start line {start} > file length {total}")
+
+    end = min(end, total)
+
+    if pretend:
+        show_pretend(lines, start, end, total)
+        return
+
+    new_lines = sys.stdin.readlines()
+    lines[start-1:end] = new_lines
+
+    with open(path, 'w') as f:
+        f.writelines(lines)
+
+if __name__ == '__main__':
+    main()

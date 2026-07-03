@@ -1,0 +1,470 @@
+[
+  {
+    "file": "src/evaluate.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/evaluate.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/evaluate.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/evaluate.o"
+  },
+  {
+    "file": "src/EviLine/bind.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/EviLine/bind.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/EviLine/bind.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/EviLine/bind.o"
+  },
+  {
+    "file": "src/EviLine/mbutils.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/EviLine/mbutils.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/EviLine/mbutils.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/EviLine/mbutils.o"
+  },
+  {
+    "file": "src/EviLine/rltest.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/EviLine/rltest.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/EviLine/rltest.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/EviLine/rltest.o"
+  },
+  {
+    "file": "src/EviLine/termm.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/EviLine/termm.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/EviLine/termm.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/EviLine/termm.o"
+  },
+  {
+    "file": "src/EviLine/testcode/bind.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/EviLine/testcode/bind.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/EviLine/testcode/bind.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/EviLine/testcode/bind.o"
+  },
+  {
+    "file": "src/EviLine/testcode/cursor.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/EviLine/testcode/cursor.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/EviLine/testcode/cursor.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/EviLine/testcode/cursor.o"
+  },
+  {
+    "file": "src/EviLine/testcode/cursortest.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/EviLine/testcode/cursortest.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/EviLine/testcode/cursortest.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/EviLine/testcode/cursortest.o"
+  },
+  {
+    "file": "src/EviLine/testcode/rltest.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/EviLine/testcode/rltest.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/EviLine/testcode/rltest.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/EviLine/testcode/rltest.o"
+  },
+  {
+    "file": "src/EviLine/testcode/termm.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/EviLine/testcode/termm.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/EviLine/testcode/termm.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/EviLine/testcode/termm.o"
+  },
+  {
+    "file": "src/EviLine/testcode/unicode_recognize.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/EviLine/testcode/unicode_recognize.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/EviLine/testcode/unicode_recognize.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/EviLine/testcode/unicode_recognize.o"
+  },
+  {
+    "file": "src/hash.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/hash.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/hash.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/hash.o"
+  },
+  {
+    "file": "src/libs/memm.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/libs/memm.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/libs/memm.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/libs/memm.o"
+  },
+  {
+    "file": "src/main.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/main.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/main.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/main.o"
+  },
+  {
+    "file": "src/operate.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/operate.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/operate.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/operate.o"
+  },
+  {
+    "file": "src/operation.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/operation.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/operation.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/operation.o"
+  },
+  {
+    "file": "src/parse_main.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/parse_main.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/parse_main.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/parse_main.o"
+  },
+  {
+    "file": "src/parse_subst.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/parse_subst.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/parse_subst.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/parse_subst.o"
+  },
+  {
+    "file": "src/process.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/process.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/process.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/process.o"
+  },
+  {
+    "file": "src/signals.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/signals.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/signals.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/signals.o"
+  },
+  {
+    "file": "src/utils/byte.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/utils/byte.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/utils/byte.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/utils/byte.o"
+  },
+  {
+    "file": "src/utils/fd.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/utils/fd.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/utils/fd.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/utils/fd.o"
+  },
+  {
+    "file": "src/utils/nmalloc.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/utils/nmalloc.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/utils/nmalloc.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/utils/nmalloc.o"
+  },
+  {
+    "file": "src/utils/test.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/utils/test.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/utils/test.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/utils/test.o"
+  },
+  {
+    "file": "src/utils/unicode.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/utils/unicode.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/utils/unicode.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/utils/unicode.o"
+  },
+  {
+    "file": "src/variables.c",
+    "arguments": [
+      "/usr/bin/cc",
+      "-std=c23",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wno-nullability-extension",
+      "-I/home/hllrgb/sh-dev/src",
+      "-c",
+      "src/variables.c",
+      "-o",
+      "/tmp/sh-dev-bear-objects/variables.o"
+    ],
+    "directory": "/home/hllrgb/sh-dev",
+    "output": "/tmp/sh-dev-bear-objects/variables.o"
+  }
+]

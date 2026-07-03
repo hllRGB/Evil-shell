@@ -1,0 +1,50 @@
+[
+  {
+    "file": "bind.c",
+    "arguments": [
+      "clang",
+      "-std=c23",
+      "-g",
+      "-O0",
+      "-Werror",
+      "-flto",
+      "-mtune=native",
+      "-march=native",
+      "bind.c",
+      "-c"
+    ],
+    "directory": "/home/yinzo/sh-dev/src/nrl/testcode"
+  },
+  {
+    "file": "cursor.c",
+    "arguments": [
+      "clang",
+      "-std=c23",
+      "-g",
+      "-O0",
+      "-Werror",
+      "-flto",
+      "-mtune=native",
+      "-march=native",
+      "cursor.c",
+      "-c"
+    ],
+    "directory": "/home/yinzo/sh-dev/src/nrl/testcode"
+  },
+  {
+    "file": "rltest.c",
+    "arguments": [
+      "clang",
+      "-std=c23",
+      "-g",
+      "-O0",
+      "-Werror",
+      "-flto",
+      "-mtune=native",
+      "-march=native",
+      "rltest.c",
+      "-c"
+    ],
+    "directory": "/home/yinzo/sh-dev/src/nrl/testcode"
+  }
+]

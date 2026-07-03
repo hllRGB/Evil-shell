@@ -1,0 +1,35 @@
+# 列宽限制（超过则触发换行）
+BasedOnStyle: LLVM
+ColumnLimit: 80
+IndentWidth: 8
+
+# 二元逻辑运算符（&&、||）换行时放在行首
+BreakBeforeBinaryOperators: All
+
+# 禁止短 if/while/for 单行
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+
+# 函数调用参数换行：每个参数独占一行（不紧凑打包）
+BinPackArguments: false
+
+# 函数声明参数换行：每个参数独占一行
+BinPackParameters: false
+
+# 禁止将所有声明参数一股脑放到下一行
+AllowAllParametersOfDeclarationOnNextLine: false
+
+# 换行后参数与左括号对齐（美观）
+AlignAfterOpenBracket: true
+
+AlignArrayOfStructures: Left
+
+AlignConsecutiveAssignments: Consecutive
+PointerAlignment: Middle
+
+AlignConsecutiveBitFields:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: true
+
+AllowShortFunctionsOnASingleLine: None
