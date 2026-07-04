@@ -1,3 +1,4 @@
+// vim: set sw=8 ts=8 et:
 /* hash.h — evilshell hash API */
 #ifndef SH_HASH_H
 #define SH_HASH_H
@@ -25,15 +26,19 @@ struct hashtab_str {
         size_t size;
 };
 
-nodiscard uint64_t hash_calculate(const void * restrict nonnull buf, size_t len);
+nodiscard uint64_t hash_calculate(const void * restrict nonnull buf,
+                                  size_t len);
 
 nodiscard HASHTAB_T * nonnull hash_create(size_t bucket_count);
 
 void hash_destroy(HASHTAB_T * nullable table,
                   void (*nullable value_destroy)(void * nullable value));
 
-nodiscard HASH_ENTRY_T * nullable hash_find_entry_with_hash(
-        HASHTAB_T * nonnull table, const void * nonnull key, size_t key_len, uint64_t hash);
+nodiscard HASH_ENTRY_T * nullable
+hash_find_entry_with_hash(HASHTAB_T * nonnull table,
+                          const void * nonnull key,
+                          size_t key_len,
+                          uint64_t hash);
 
 nodiscard void * nullable hash_get_with_hash(HASHTAB_T * nonnull table,
                                              const void * nonnull key,
@@ -46,11 +51,12 @@ HASH_ENTRY_T * nonnull hash_set_with_hash(HASHTAB_T * nonnull table,
                                           uint64_t hash,
                                           void * nullable value);
 
-bool hash_delete_with_hash(HASHTAB_T * nonnull table,
-                           const void * nonnull key,
-                           size_t key_len,
-                           uint64_t hash,
-                           void (*nullable value_destroy)(void * nullable value));
+bool hash_delete_with_hash(
+    HASHTAB_T * nonnull table,
+    const void * nonnull key,
+    size_t key_len,
+    uint64_t hash,
+    void (*nullable value_destroy)(void * nullable value));
 
 nodiscard HASH_ENTRY_T * nullable hash_find_entry(HASHTAB_T * nonnull table,
                                                   const void * nonnull key,

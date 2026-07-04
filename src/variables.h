@@ -66,8 +66,8 @@ typedef enum var_own_flag {
 } VAR_OWN_FLAG_T;
 
 #define VAR_PTR_ERR ((void * nullable)(uintptr_t)UINTPTR_MAX)
-#define VAR_VALUE_ERR ((VAR_VALUE_T * nullable)VAR_PTR_ERR)
-#define VAR_ERR ((VAR_T * nullable)VAR_PTR_ERR)
+#define VAR_VALUE_ERR ((VAR_VALUE_T * nullable) VAR_PTR_ERR)
+#define VAR_ERR ((VAR_T * nullable) VAR_PTR_ERR)
 
 #define var_ptr_is_err(ptr) ((const void *)(ptr) == (const void *)VAR_PTR_ERR)
 #define var_value_is_err(value) var_ptr_is_err(value)
@@ -101,21 +101,25 @@ typedef struct var_lookup {
 typedef struct var_call_ops {
         VAR_VALUE_T * nullable (*nullable get)(VAR_T * nonnull var);
         VAR_VALUE_T * nullable (*nullable set)(VAR_T * nonnull var,
-                                              VAR_VALUE_T * nullable value,
-                                              BITMASK32_T flags);
-        VAR_VALUE_T * nullable (*nullable unset)(VAR_T * nonnull var, BITMASK32_T flags);
+                                               VAR_VALUE_T * nullable value,
+                                               BITMASK32_T flags);
+        VAR_VALUE_T * nullable (*nullable unset)(VAR_T * nonnull var,
+                                                 BITMASK32_T flags);
 } VAR_CALL_OPS_T;
 
 typedef struct var_array_call_ops {
-        VAR_VALUE_T * nullable (*nullable get_elem)(VAR_T * nonnull var,
-                                                   const VAR_SUBSCRIPT_T * nonnull subscript);
-        VAR_VALUE_T * nullable (*nullable set_elem)(VAR_T * nonnull var,
-                                                   const VAR_SUBSCRIPT_T * nonnull subscript,
-                                                   VAR_VALUE_T * nullable value,
-                                                   BITMASK32_T flags);
-        VAR_VALUE_T * nullable (*nullable unset_elem)(VAR_T * nonnull var,
-                                                     const VAR_SUBSCRIPT_T * nonnull subscript,
-                                                     BITMASK32_T flags);
+        VAR_VALUE_T * nullable (*nullable get_elem)(
+            VAR_T * nonnull var,
+            const VAR_SUBSCRIPT_T * nonnull subscript);
+        VAR_VALUE_T *
+        nullable (*nullable set_elem)(VAR_T * nonnull var,
+                                      const VAR_SUBSCRIPT_T * nonnull subscript,
+                                      VAR_VALUE_T * nullable value,
+                                      BITMASK32_T flags);
+        VAR_VALUE_T * nullable (*nullable unset_elem)(
+            VAR_T * nonnull var,
+            const VAR_SUBSCRIPT_T * nonnull subscript,
+            BITMASK32_T flags);
         VAR_VALUE_T * nullable (*nullable keys)(VAR_T * nonnull var);
         SUCCESS_T (*nullable length)(VAR_T * nonnull var, size_t * nonnull out);
         VAR_VALUE_T * nullable (*nullable materialize)(VAR_T * nonnull var);
@@ -156,104 +160,128 @@ struct var_str {
 };
 
 void var_value_init_unset(VAR_VALUE_T * nonnull value);
-SUCCESS_T var_value_init_string(VAR_VALUE_T * nonnull value, const char * nonnull string);
+SUCCESS_T var_value_init_string(VAR_VALUE_T * nonnull value,
+                                const char * nonnull string);
 SUCCESS_T
-var_value_init_string_len(VAR_VALUE_T * nonnull value, const char * nonnull string, size_t len);
+var_value_init_string_len(VAR_VALUE_T * nonnull value,
+                          const char * nonnull string,
+                          size_t len);
 void var_value_init_int(VAR_VALUE_T * nonnull value, SH_ARITH_T integer);
-SUCCESS_T var_value_copy(VAR_VALUE_T * nonnull dst, const VAR_VALUE_T * nonnull src);
-nodiscard VAR_VALUE_T * nullable var_value_clone(const VAR_VALUE_T * nonnull src);
+SUCCESS_T var_value_copy(VAR_VALUE_T * nonnull dst,
+                         const VAR_VALUE_T * nonnull src);
+nodiscard VAR_VALUE_T * nullable
+var_value_clone(const VAR_VALUE_T * nonnull src);
 void var_value_destroy(VAR_VALUE_T * nonnull value);
 void var_value_free(VAR_VALUE_T * nullable value);
 
 nodiscard VAR_ARRAY_T * nonnull var_array_create(VAR_ARRAY_KIND_T kind);
 void var_array_destroy(VAR_ARRAY_T * nullable array);
 void var_array_set_call(VAR_ARRAY_T * nonnull array,
-                       const VAR_ARRAY_CALL_OPS_T * nullable ops,
-                       void * nullable data);
+                        const VAR_ARRAY_CALL_OPS_T * nullable ops,
+                        void * nullable data);
 
 nodiscard bool var_name_is_valid(const char * nonnull name);
 
-nodiscard VAR_SCOPE_T * nonnull var_scope_create(VAR_SCOPE_KIND_T kind, VAR_SCOPE_T * nullable next);
+nodiscard VAR_SCOPE_T * nonnull var_scope_create(VAR_SCOPE_KIND_T kind,
+                                                 VAR_SCOPE_T * nullable next);
 void var_scope_destroy(VAR_SCOPE_T * nullable scope);
-nodiscard VAR_LOOKUP_T var_scope_get(VAR_SCOPE_T * nullable start, const char * nonnull name);
-nodiscard VAR_LOOKUP_T var_scope_get_in(VAR_SCOPE_T * nonnull scope, const char * nonnull name);
+nodiscard VAR_LOOKUP_T var_scope_get(VAR_SCOPE_T * nullable start,
+                                     const char * nonnull name);
+nodiscard VAR_LOOKUP_T var_scope_get_in(VAR_SCOPE_T * nonnull scope,
+                                        const char * nonnull name);
 nodiscard VAR_T * nullable var_scope_set(VAR_SCOPE_T * nonnull start,
-                                           VAR_SCOPE_T * nonnull fallback,
-                                           const char * nonnull name,
-                                           VAR_VALUE_T * nullable value,
-                                           BITMASK32_T flags,
-                                           BITMASK32_T create_attr,
-                                           VAR_VALUE_T * nullable * nullable old_out);
+                                         VAR_SCOPE_T * nonnull fallback,
+                                         const char * nonnull name,
+                                         VAR_VALUE_T * nullable value,
+                                         BITMASK32_T flags,
+                                         BITMASK32_T create_attr,
+                                         VAR_VALUE_T * nullable
+                                             * nullable old_out);
 nodiscard VAR_T * nullable var_scope_set_in(VAR_SCOPE_T * nonnull scope,
-                                              const char * nonnull name,
-                                              VAR_VALUE_T * nullable value,
-                                              BITMASK32_T flags,
-                                              BITMASK32_T create_attr,
-                                              VAR_VALUE_T * nullable * nullable old_out);
-SUCCESS_T var_scope_delete(VAR_SCOPE_T * nonnull start, const char * nonnull name);
-SUCCESS_T var_scope_delete_in(VAR_SCOPE_T * nonnull scope, const char * nonnull name);
+                                            const char * nonnull name,
+                                            VAR_VALUE_T * nullable value,
+                                            BITMASK32_T flags,
+                                            BITMASK32_T create_attr,
+                                            VAR_VALUE_T * nullable
+                                                * nullable old_out);
+SUCCESS_T var_scope_delete(VAR_SCOPE_T * nonnull start,
+                           const char * nonnull name);
+SUCCESS_T var_scope_delete_in(VAR_SCOPE_T * nonnull scope,
+                              const char * nonnull name);
 SUCCESS_T var_scope_list(VAR_SCOPE_T * nonnull scope,
-                        SUCCESS_T (*nonnull callback)(VAR_T * nonnull var,
-                                                      void * nullable data),
-                        void * nullable data);
+                         SUCCESS_T (*nonnull callback)(VAR_T * nonnull var,
+                                                       void * nullable data),
+                         void * nullable data);
 
-nodiscard VAR_LOOKUP_T var_find(VAR_SCOPE_T * nullable start, const char * nonnull name);
-nodiscard VAR_LOOKUP_T var_find_in(VAR_SCOPE_T * nonnull scope, const char * nonnull name);
+nodiscard VAR_LOOKUP_T var_find(VAR_SCOPE_T * nullable start,
+                                const char * nonnull name);
+nodiscard VAR_LOOKUP_T var_find_in(VAR_SCOPE_T * nonnull scope,
+                                   const char * nonnull name);
 nodiscard VAR_T * nullable var_find_visible(VAR_SCOPE_T * nullable start,
-                                                  const char * nonnull name);
+                                            const char * nonnull name);
 nodiscard VAR_T * nullable var_find_in_scope(VAR_SCOPE_T * nonnull scope,
-                                                   const char * nonnull name);
+                                             const char * nonnull name);
 
 SUCCESS_T var_scope_write(VAR_SCOPE_T * nonnull start,
-                         VAR_SCOPE_T * nonnull fallback,
-                         const char * nonnull name,
-                         const VAR_VALUE_T * nonnull value,
-                         BITMASK32_T create_attr);
-SUCCESS_T var_scope_write_in(VAR_SCOPE_T * nonnull scope,
-                            const char * nonnull name,
-                            const VAR_VALUE_T * nonnull value,
-                            BITMASK32_T create_attr);
-SUCCESS_T var_scope_chattr(VAR_SCOPE_T * nonnull start,
                           VAR_SCOPE_T * nonnull fallback,
                           const char * nonnull name,
-                          BITMASK32_T set_attr,
-                          BITMASK32_T clear_attr,
+                          const VAR_VALUE_T * nonnull value,
                           BITMASK32_T create_attr);
-SUCCESS_T var_scope_chattr_in(VAR_SCOPE_T * nonnull scope,
+SUCCESS_T var_scope_write_in(VAR_SCOPE_T * nonnull scope,
                              const char * nonnull name,
-                             BITMASK32_T set_attr,
-                             BITMASK32_T clear_attr,
+                             const VAR_VALUE_T * nonnull value,
                              BITMASK32_T create_attr);
-SUCCESS_T var_scope_unset(VAR_SCOPE_T * nonnull start, const char * nonnull name);
-SUCCESS_T var_scope_unset_in(VAR_SCOPE_T * nonnull scope, const char * nonnull name);
+SUCCESS_T var_scope_chattr(VAR_SCOPE_T * nonnull start,
+                           VAR_SCOPE_T * nonnull fallback,
+                           const char * nonnull name,
+                           BITMASK32_T set_attr,
+                           BITMASK32_T clear_attr,
+                           BITMASK32_T create_attr);
+SUCCESS_T var_scope_chattr_in(VAR_SCOPE_T * nonnull scope,
+                              const char * nonnull name,
+                              BITMASK32_T set_attr,
+                              BITMASK32_T clear_attr,
+                              BITMASK32_T create_attr);
+SUCCESS_T var_scope_unset(VAR_SCOPE_T * nonnull start,
+                          const char * nonnull name);
+SUCCESS_T var_scope_unset_in(VAR_SCOPE_T * nonnull scope,
+                             const char * nonnull name);
 SUCCESS_T
-var_promote(VAR_SCOPE_T * nonnull from, VAR_SCOPE_T * nonnull to, const char * nonnull name);
+var_promote(VAR_SCOPE_T * nonnull from,
+            VAR_SCOPE_T * nonnull to,
+            const char * nonnull name);
 
 nodiscard VAR_T * nonnull var_create(const char * nonnull name,
-                                           size_t name_len,
-                                           BITMASK32_T attr);
+                                     size_t name_len,
+                                     BITMASK32_T attr);
 void var_destroy(VAR_T * nullable var);
 nodiscard VAR_VALUE_T * nullable var_get(VAR_T * nonnull var);
 nodiscard VAR_VALUE_T * nullable var_set(VAR_T * nonnull var,
-                                           VAR_VALUE_T * nullable value,
-                                           BITMASK32_T flags);
-nodiscard VAR_VALUE_T * nullable var_delete(VAR_T * nonnull var, BITMASK32_T flags);
+                                         VAR_VALUE_T * nullable value,
+                                         BITMASK32_T flags);
+nodiscard VAR_VALUE_T * nullable var_delete(VAR_T * nonnull var,
+                                            BITMASK32_T flags);
 nodiscard SUCCESS_T var_read(VAR_T * nonnull var, VAR_VALUE_T * nonnull out);
-nodiscard SUCCESS_T var_write(VAR_T * nonnull var, const VAR_VALUE_T * nonnull value);
-nodiscard SUCCESS_T var_chattr(VAR_T * nonnull var, BITMASK32_T set_attr, BITMASK32_T clear_attr);
+nodiscard SUCCESS_T var_write(VAR_T * nonnull var,
+                              const VAR_VALUE_T * nonnull value);
+nodiscard SUCCESS_T var_chattr(VAR_T * nonnull var,
+                               BITMASK32_T set_attr,
+                               BITMASK32_T clear_attr);
 void var_set_call(VAR_T * nonnull var,
-                     const VAR_CALL_OPS_T * nullable ops,
-                     void * nullable data);
+                  const VAR_CALL_OPS_T * nullable ops,
+                  void * nullable data);
 
-nodiscard VAR_VALUE_T * nullable var_array_get(VAR_T * nonnull var,
-                                                 const VAR_SUBSCRIPT_T * nonnull subscript);
-nodiscard VAR_VALUE_T * nullable var_array_set(VAR_T * nonnull var,
-                                                 const VAR_SUBSCRIPT_T * nonnull subscript,
-                                                 VAR_VALUE_T * nullable value,
-                                                 BITMASK32_T flags);
-nodiscard VAR_VALUE_T * nullable var_array_delete(VAR_T * nonnull var,
-                                                    const VAR_SUBSCRIPT_T * nonnull subscript,
-                                                    BITMASK32_T flags);
+nodiscard VAR_VALUE_T * nullable
+var_array_get(VAR_T * nonnull var, const VAR_SUBSCRIPT_T * nonnull subscript);
+nodiscard VAR_VALUE_T * nullable
+var_array_set(VAR_T * nonnull var,
+              const VAR_SUBSCRIPT_T * nonnull subscript,
+              VAR_VALUE_T * nullable value,
+              BITMASK32_T flags);
+nodiscard VAR_VALUE_T * nullable
+var_array_delete(VAR_T * nonnull var,
+                 const VAR_SUBSCRIPT_T * nonnull subscript,
+                 BITMASK32_T flags);
 nodiscard VAR_VALUE_T * nullable var_array_keys(VAR_T * nonnull var);
 nodiscard SUCCESS_T var_array_length(VAR_T * nonnull var, size_t * nonnull out);
 
