@@ -4,6 +4,7 @@
 #define SH_MEMM_H
 
 #include "include/evilgeneral.h"
+#include <stddef.h>
 
 #define STALLOC_BLOCK_SIZE (size_t)4096
 
@@ -23,10 +24,10 @@ typedef struct starea_str {
 
 nodiscard STAREA_T * nonnull stnew(void);
 void stdestroy(STAREA_T * nonnull area);
-nodiscard void * nonnull stalloc(STAREA_T * nonnull area, uint64_t size);
+nodiscard void * nonnull stalloc(STAREA_T * nonnull area, size_t size);
 void stflush(STAREA_T * nonnull area);
 nodiscard void * nonnull stalignalloc(STAREA_T * nonnull area,
-                                      uint64_t size,
+                                      size_t size,
                                       uint8_t align);
 
 nodiscard void * nonnull xmalloc(size_t size);

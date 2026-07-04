@@ -3,13 +3,20 @@
 
 #include "libs/memm.h"
 #include "include/evilgeneral.h"
+#include <stddef.h>
+#include <stdio.h>
 
 static void memory_abort(const char * nonnull name) {
         perror(name);
         abort();
 }
 
-/* discard ok */ static size_t stfreeblock(STBLOCK_T * nonnull block) {
+static void memory_error(const char * nonnull msg) {
+        fputs(msg, stderr);
+        abort;
+}
+
+/* discard ok */ static size_t stfreeblocks(STBLOCK_T * nonnull block) {
         auto this         = block;
         auto next         = block->next;
         size_t total_size = 0;
@@ -28,12 +35,12 @@ nodiscard static STBLOCK_T * nonnull stnewblk(size_t size) {
         STBLOCK_T * nonnull block = xmalloc(sizeof(STBLOCK_T) + size);
         block->capa = (block->body = (uint8_t * nonnull)(block + 1)) + size;
         block->next = nullptr;
+        block->top  = block->body;
         return block;
 }
 
 /* ----------------------------------------------------------------------------------------------------------------------------------
  */
-
 nodiscard STAREA_T * nonnull stnew(void) {
         auto area       = (STAREA_T * nonnull) xmalloc(sizeof(STAREA_T));
         area->lastblock = area->blocks = stnewblk(STALLOC_BLOCK_SIZE);
@@ -41,7 +48,8 @@ nodiscard STAREA_T * nonnull stnew(void) {
         return area;
 }
 
-nodiscard void * nonnull stalloc(STAREA_T * nonnull area, uint64_t size) {
+/* 暂不考虑size溢出问题,因为触发过于困难. */
+nodiscard void * nonnull stalloc(STAREA_T * nonnull area, size_t size) {
         if (area->lastblock->top + size > area->lastblock->capa) {
 
                 area->lastblock = area->lastblock->next = stnewblk(
@@ -54,7 +62,7 @@ nodiscard void * nonnull stalloc(STAREA_T * nonnull area, uint64_t size) {
 
 /* Note: 1 <= align <= 8 */
 nodiscard void * nonnull stalignalloc(STAREA_T * nonnull area,
-                                      uint64_t size,
+                                      size_t size,
                                       uint8_t align) {
 
         area->lastblock->top = (uint8_t * nonnull)(
@@ -64,12 +72,19 @@ nodiscard void * nonnull stalignalloc(STAREA_T * nonnull area,
 }
 
 void stflush(STAREA_T * nonnull area) {
-        area->flush_size = stfreeblock(area->blocks);
-        area->lastblock = area->blocks = stnewblk(area->flush_size);
+        if (area->blocks->next) {
+                area->flush_size = stfreeblocks(area->blocks);
+                area->flush_size = area->flush_size > (8UL << 20)
+                                       ? (8UL << 20)
+                                       : area->flush_size;
+                area->lastblock = area->blocks = stnewblk(area->flush_size);
+        } else {
+                area->blocks->top = area->blocks->body;
+        }
 }
 
 void stdestroy(STAREA_T * nonnull area) {
-        stfreeblock(area->blocks);
+        stfreeblocks(area->blocks);
         xfree(area);
 }
 
@@ -90,6 +105,9 @@ nodiscard void * nonnull xcalloc(size_t count, size_t size) {
 }
 
 nodiscard void * nonnull xrealloc(void * nonnull ptr, size_t size) {
+        if (size == 0) {
+                memory_error("xmalloc: size cannot be zero.");
+        }
         void * new_ptr = realloc(ptr, size);
         if (new_ptr == NULL) {
                 memory_abort("xrealloc");
@@ -97,6 +115,6 @@ nodiscard void * nonnull xrealloc(void * nonnull ptr, size_t size) {
         return new_ptr;
 }
 
-void xfree(void * nonnull ptr) {
+void xfree(void * nonnull ptr) { // nonnull wrapper
         free(ptr);
 }

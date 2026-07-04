@@ -29,9 +29,58 @@ nodiscard static size_t hash_bucket_index(const HASHTAB_T * nonnull table,
         return (size_t)hash & (table->bucket_count - 1);
 }
 
+static bool entry_key_equals(const HASH_ENTRY_T * nonnull entry,
+                             const void * nonnull key,
+                             size_t key_len) {
+        return entry->key_len == key_len
+               && memcmp(entry->key, key, key_len) == 0;
+}
+
+static void bucket_insert(HASHTAB_T * nonnull table,
+                          HASH_ENTRY_T * nonnull entry) {
+        size_t index = hash_bucket_index(table, entry->hash);
+
+        entry->bucket_next = table->buckets[index];
+        if (entry->bucket_next != NULL)
+                entry->bucket_next->bucket_prev = entry;
+        table->buckets[index] = entry;
+}
+
+static void iter_insert(HASHTAB_T * nonnull table,
+                        HASH_ENTRY_T * nonnull entry) {
+        entry->iter_next = table->head;
+        if (entry->iter_next != NULL)
+                entry->iter_next->iter_prev = entry;
+        table->head = entry;
+}
+
+static void bucket_remove(HASHTAB_T * nonnull table,
+                          HASH_ENTRY_T * nonnull entry) {
+        size_t index = hash_bucket_index(table, entry->hash);
+
+        if (entry->bucket_prev != NULL)
+                entry->bucket_prev->bucket_next = entry->bucket_next;
+        else
+                table->buckets[index] = entry->bucket_next;
+        if (entry->bucket_next != NULL)
+                entry->bucket_next->bucket_prev = entry->bucket_prev;
+}
+
+static void iter_remove(HASHTAB_T * nonnull table,
+                        HASH_ENTRY_T * nonnull entry) {
+        if (entry->iter_prev != NULL)
+                entry->iter_prev->iter_next = entry->iter_next;
+        else
+                table->head = entry->iter_next;
+        if (entry->iter_next != NULL)
+                entry->iter_next->iter_prev = entry->iter_prev;
+}
+
+// ------------------------------------------------------------------------------------------------
+
 nodiscard uint64_t hash_calculate(const void * restrict nonnull buf,
                                   size_t len) {
-        return rapidhashNano(buf, len); // 必要的语义封装。
+        return rapidhashNano(buf, len); // 语义封装。
 }
 
 nodiscard HASHTAB_T * nonnull hash_create(size_t bucket_count) {
@@ -42,13 +91,6 @@ nodiscard HASHTAB_T * nonnull hash_create(size_t bucket_count) {
         table->head    = NULL;
         table->size    = 0;
         return table;
-}
-
-static bool entry_key_equals(const HASH_ENTRY_T * nonnull entry,
-                             const void * nonnull key,
-                             size_t key_len) {
-        return entry->key_len == key_len
-               && memcmp(entry->key, key, key_len) == 0;
 }
 
 nodiscard HASH_ENTRY_T * nullable
@@ -91,24 +133,6 @@ nodiscard void * nullable hash_get(HASHTAB_T * nonnull table,
             table, key, key_len, hash_calculate(key, key_len));
 }
 
-static void s_bucket_insert(HASHTAB_T * nonnull table,
-                            HASH_ENTRY_T * nonnull entry) {
-        size_t index = hash_bucket_index(table, entry->hash);
-
-        entry->bucket_next = table->buckets[index];
-        if (entry->bucket_next != NULL)
-                entry->bucket_next->bucket_prev = entry;
-        table->buckets[index] = entry;
-}
-
-static void s_iter_insert(HASHTAB_T * nonnull table,
-                          HASH_ENTRY_T * nonnull entry) {
-        entry->iter_next = table->head;
-        if (entry->iter_next != NULL)
-                entry->iter_next->iter_prev = entry;
-        table->head = entry;
-}
-
 HASH_ENTRY_T * nonnull hash_set_with_hash(HASHTAB_T * nonnull table,
                                           const void * nonnull key,
                                           size_t key_len,
@@ -129,8 +153,8 @@ HASH_ENTRY_T * nonnull hash_set_with_hash(HASHTAB_T * nonnull table,
         entry->key_len = key_len;
         entry->value   = value;
         memcpy(entry->key, key, key_len);
-        s_bucket_insert(table, entry);
-        s_iter_insert(table, entry);
+        bucket_insert(table, entry);
+        iter_insert(table, entry);
         table->size++;
         return entry;
 }
@@ -141,28 +165,6 @@ HASH_ENTRY_T * nonnull hash_set(HASHTAB_T * nonnull table,
                                 void * nullable value) {
         return hash_set_with_hash(
             table, key, key_len, hash_calculate(key, key_len), value);
-}
-
-static void bucket_remove(HASHTAB_T * nonnull table,
-                          HASH_ENTRY_T * nonnull entry) {
-        size_t index = hash_bucket_index(table, entry->hash);
-
-        if (entry->bucket_prev != NULL)
-                entry->bucket_prev->bucket_next = entry->bucket_next;
-        else
-                table->buckets[index] = entry->bucket_next;
-        if (entry->bucket_next != NULL)
-                entry->bucket_next->bucket_prev = entry->bucket_prev;
-}
-
-static void iter_remove(HASHTAB_T * nonnull table,
-                        HASH_ENTRY_T * nonnull entry) {
-        if (entry->iter_prev != NULL)
-                entry->iter_prev->iter_next = entry->iter_next;
-        else
-                table->head = entry->iter_next;
-        if (entry->iter_next != NULL)
-                entry->iter_next->iter_prev = entry->iter_prev;
 }
 
 bool hash_delete_with_hash(
