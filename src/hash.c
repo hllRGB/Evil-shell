@@ -58,10 +58,6 @@ static HASH_ENTRY_T * nonnull hash_entry_new(uint64_t hash,
                                              const char * nonnull key,
                                              size_t keylen,
                                              void * nullable value) {
-        if (keylen == SIZE_MAX) {
-                hash_abort("hash key too large");
-        }
-
         HASH_ENTRY_T * nonnull entry = xmalloc(sizeof(HASH_ENTRY_T));
         entry->key                   = xmalloc(keylen + 1);
         memcpy(entry->key, key, keylen);
@@ -164,7 +160,14 @@ nodiscard SUCCESS_T hash_tab_resize(HASHTAB_T * nonnull table,
 
 void hash_tab_destroy(HASHTAB_T * nonnull table) {
         // Free all entries, buckets, and table itself.
-        hash_tab_clear(table);
+        HASH_ENTRY_T * nullable entry = table->head;
+        while (entry) {
+                HASH_ENTRY_T * nullable next = entry->entry_next;
+                hash_entry_free(entry);
+                entry = next;
+        }
+        table->head      = nullptr;
+        table->entry_num = 0;
         xfree(table->buckets);
         xfree(table);
 }

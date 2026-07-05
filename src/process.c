@@ -40,7 +40,7 @@ static void s_dead_push(PROC_TABLE_T * nonnull table, PROC_T * nonnull proc) {
         table->dead.count++;
 }
 
-// ——— public API ———
+// -----------------------------------------------------------------------------------------------------------------------
 
 void proc_table_init(PROC_TABLE_T * nonnull table) {
         table->live.tab   = hash_create(64);
@@ -122,9 +122,11 @@ bool proc_reap_pending(PROC_TABLE_T * nonnull table) {
         int status;
         pid_t pid;
 
-        while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED | WCONTINUED)) > 0) {
-                uint64_t h    = (uint64_t)pid;
-                PROC_T * proc = hash_get_with_hash(table->live.tab, &pid, sizeof(pid), h);
+        while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED | WCONTINUED))
+               > 0) {
+                uint64_t h = (uint64_t)pid;
+                PROC_T * proc
+                    = hash_get_with_hash(table->live.tab, &pid, sizeof(pid), h);
 
                 if (proc == NULL)
                         continue;
@@ -135,7 +137,8 @@ bool proc_reap_pending(PROC_TABLE_T * nonnull table) {
                         proc->exit_status = WEXITSTATUS(status);
                         proc->dumped_core = false;
 
-                        hash_delete_with_hash(table->live.tab, &pid, sizeof(pid), h, NULL);
+                        hash_delete_with_hash(
+                            table->live.tab, &pid, sizeof(pid), h, NULL);
                         table->live.count--;
                         s_dead_push(table, proc);
                         reaped = true;
@@ -145,7 +148,8 @@ bool proc_reap_pending(PROC_TABLE_T * nonnull table) {
                         proc->exit_status = WTERMSIG(status);
                         proc->dumped_core = WCOREDUMP(status);
 
-                        hash_delete_with_hash(table->live.tab, &pid, sizeof(pid), h, NULL);
+                        hash_delete_with_hash(
+                            table->live.tab, &pid, sizeof(pid), h, NULL);
                         table->live.count--;
                         s_dead_push(table, proc);
                         reaped = true;
@@ -191,6 +195,10 @@ PROC_T * nullable proc_find(PROC_TABLE_T * nonnull table, pid_t pid) {
         return hash_get_with_hash(table->live.tab, &pid, sizeof(pid), hash);
 }
 
-size_t proc_live_count(PROC_TABLE_T * nonnull table) { return table->live.count; }
+size_t proc_live_count(PROC_TABLE_T * nonnull table) {
+        return table->live.count;
+}
 
-size_t proc_dead_count(PROC_TABLE_T * nonnull table) { return table->dead.count; }
+size_t proc_dead_count(PROC_TABLE_T * nonnull table) {
+        return table->dead.count;
+}
