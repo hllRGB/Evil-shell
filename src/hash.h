@@ -3,52 +3,63 @@
 #ifndef SH_HASH_H
 #define SH_HASH_H
 
-#include "include/evilgeneral.h"
+#include "evilgeneral.h"
+
+#define HASH_DEFAULT_BUCKETS ((size_t)1 << 6) // 1<<6==64
 
 typedef struct hash_entry_str {
-        struct hash_entry_str * nullable bucket_prev;
-        struct hash_entry_str * nullable bucket_next;
-        struct hash_entry_str * nullable iter_prev;
-        struct hash_entry_str * nullable iter_next;
+        char * nonnull key;
+        size_t keylen;
         uint64_t hash;
-        size_t key_len;
         void * nullable value;
-        uint8_t key[];
-} HASH_ENTRY_T;
+        struct hash_entry_str * nullable prev;       // 构成桶内链表
+        struct hash_entry_str * nullable next;       // 构成桶内链表
+        struct hash_entry_str * nullable entry_prev; // 构成总链表
+        struct hash_entry_str * nullable entry_next; // 构成总链表
+} HASH_ENTRY_T; // 其实是哈希桶和哈希项共用了
 
 typedef struct hashtab_str {
         HASH_ENTRY_T * nullable * nonnull buckets;
         HASH_ENTRY_T * nullable head;
-        size_t bucket_count;
-        size_t size;
+        size_t bucket_num;
+        size_t entry_num;
 } HASHTAB_T;
 
 nodiscard uint64_t hash_calculate(const void * restrict nonnull buf,
                                   size_t len);
 
-nodiscard HASHTAB_T * nonnull hash_create(size_t bucket_count);
+// bucket_num必须为2的幂次
+nodiscard HASHTAB_T * nonnull hash_tab_create(size_t bucket_num);
+nodiscard SUCCESS_T hash_tab_resize(HASHTAB_T * nonnull table,
+                                    size_t bucket_num);
+void hash_tab_destroy(HASHTAB_T * nonnull table);
+void hash_tab_clear(HASHTAB_T * nonnull table);
 
-void hash_destroy(HASHTAB_T * nullable table,
-                  void (*nullable value_destroy)(void * nullable value));
+nodiscard SUCCESS_T hash_read(HASHTAB_T * nonnull table,
+                              const char * nonnull key,
+                              size_t keylen,
+                              void * nullable * nonnull result);
+nodiscard SUCCESS_T hash_write(HASHTAB_T * nonnull table,
+                               const char * nonnull key,
+                               size_t keylen,
+                               void * nullable value);
+nodiscard SUCCESS_T hash_rm(HASHTAB_T * nonnull table,
+                            const char * nonnull key,
+                            size_t keylen);
 
-nodiscard HASH_ENTRY_T * nullable hash_find_entry(HASHTAB_T * nonnull table,
-                                                  const void * nonnull key,
-                                                  size_t key_len);
-
-nodiscard void * nullable hash_read(HASHTAB_T * nonnull table,
-                                    const void * nonnull key,
-                                    size_t key_len);
-
-HASH_ENTRY_T * nonnull hash_write(HASHTAB_T * nonnull table,
-                                  const void * nonnull key,
-                                  size_t key_len,
-                                  void * nullable value);
-
-bool hash_rm(HASHTAB_T * nonnull table,
-             const void * nonnull key,
-             size_t key_len,
-             void (*nullable value_destroy)(void * nullable value));
-
-nodiscard HASH_ENTRY_T * nullable hash_next(HASH_ENTRY_T * nonnull entry);
+nodiscard SUCCESS_T hash_read_hashed(HASHTAB_T * nonnull table,
+                                     uint64_t hash,
+                                     const char * nonnull key,
+                                     size_t keylen,
+                                     void * nullable * nonnull result);
+nodiscard SUCCESS_T hash_write_hashed(HASHTAB_T * nonnull table,
+                                      uint64_t hash,
+                                      const char * nonnull key,
+                                      size_t keylen,
+                                      void * nullable value);
+nodiscard SUCCESS_T hash_rm_hashed(HASHTAB_T * nonnull table,
+                                   uint64_t hash,
+                                   const char * nonnull key,
+                                   size_t keylen);
 
 #endif /* SH_HASH_H */

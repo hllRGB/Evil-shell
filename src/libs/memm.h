@@ -3,7 +3,7 @@
 #ifndef SH_MEMM_H
 #define SH_MEMM_H
 
-#include "include/evilgeneral.h"
+#include "evilgeneral.h"
 #include <stddef.h>
 
 #define STALLOC_BLOCK_SIZE (size_t)4096

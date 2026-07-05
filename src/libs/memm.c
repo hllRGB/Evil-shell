@@ -1,10 +1,8 @@
 // vim: set sw=8 ts=8 et:
 /* evil shell 内存管理 */
 
-#include "libs/memm.h"
-#include "include/evilgeneral.h"
-#include <stddef.h>
-#include <stdio.h>
+#include "memm.h"
+#include "evilgeneral.h"
 
 static void memory_abort(const char * nonnull name) {
         perror(name);
@@ -13,7 +11,7 @@ static void memory_abort(const char * nonnull name) {
 
 static void memory_error(const char * nonnull msg) {
         fputs(msg, stderr);
-        abort;
+        abort();
 }
 
 /* discard ok */ static size_t stfreeblocks(STBLOCK_T * nonnull block) {
